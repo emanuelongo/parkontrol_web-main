@@ -5,6 +5,7 @@ import { AuthService } from '../../services/autenticacion.service';
 import { of, throwError } from 'rxjs';
 import { Usuario } from '../../models/usuario.model';
 import { RolUsuario } from '../../models/shared.model';
+import { expectOcupacionDashboard } from '../../testing/fluent-assertions';
 const mockUsuario = (overrides: Partial<Usuario> = {}): Usuario => ({
   id: 1,
   idEmpresa: 1,
@@ -376,10 +377,18 @@ describe('VistasComponent', () => {
     initComponent();
 
     // Assert
-    expect(component.promedioOcupacion).toBe(30);
-    expect(component.totalReservas).toBe(1);
-    expect(component.ingresosTotal).toBe(200000);
-    expect(component.facturacionTotal).toBe(120000);
+    expectOcupacionDashboard({
+      promedioOcupacion: component.promedioOcupacion,
+      totalReservas: component.totalReservas,
+      ingresosTotal: component.ingresosTotal,
+      facturacionTotal: component.facturacionTotal,
+    })
+      .toHavePromedio(30)
+      .toHaveTotales({
+        totalReservas: 1,
+        ingresosTotal: 200000,
+        facturacionTotal: 120000,
+      });
   });
 
   it('no debe consultar vistas si no hay empresa autenticada', () => {
@@ -436,8 +445,17 @@ describe('VistasComponent', () => {
     initComponent();
 
     // Assert
-    expect(component.promedioOcupacion).toBe(0);
-    expect(component.ingresosTotal).toBe(0);
-    expect(component.facturacionTotal).toBe(0);
+    expectOcupacionDashboard({
+      promedioOcupacion: component.promedioOcupacion,
+      totalReservas: component.totalReservas,
+      ingresosTotal: component.ingresosTotal,
+      facturacionTotal: component.facturacionTotal,
+    })
+      .toHavePromedio(0)
+      .toHaveTotales({
+        totalReservas: component.totalReservas,
+        ingresosTotal: 0,
+        facturacionTotal: 0,
+      });
   });
 });

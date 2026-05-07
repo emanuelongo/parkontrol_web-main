@@ -1,9 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
 import { UsuariosService } from 'src/usuarios/usuarios.service';
 import * as bcrypt from 'bcrypt';
+import { expectAuthResult, expectFailure } from 'src/shared/testing/fluent-assertions';
 
 jest.mock('bcrypt', () => ({
   compare: jest.fn(),
@@ -63,7 +63,7 @@ describe('AuthService', () => {
     const result = await service.login(loginDto);
 
     // Assert
-    expect(result.access_token).toBe('token-prueba');
+    expectAuthResult(result).toHaveAccessToken('token-prueba');
     expect(bcrypt.compare).toHaveBeenCalledWith(validPassword, 'hash');
   });
 
@@ -73,7 +73,7 @@ describe('AuthService', () => {
     currentUser = null;
 
     // Act + Assert
-    await expect(service.login(loginDto)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expectFailure(service.login(loginDto)).toBeUnauthorized();
     expect(bcrypt.compare).not.toHaveBeenCalled();
   });
 
@@ -91,7 +91,7 @@ describe('AuthService', () => {
     (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
     // Act + Assert
-    await expect(service.login(loginDto)).rejects.toBeInstanceOf(UnauthorizedException);
+    await expectFailure(service.login(loginDto)).toBeUnauthorized();
     expect(bcrypt.compare).toHaveBeenCalledWith(invalidPassword, 'hash');
   });
 

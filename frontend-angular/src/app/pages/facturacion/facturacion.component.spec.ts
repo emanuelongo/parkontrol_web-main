@@ -6,6 +6,7 @@ import { FacturacionService } from '../../services/facturacion.service';
 import { AuthService } from '../../services/autenticacion.service';
 import { VistasService } from '../../services/vistas.service';
 import { ClienteFactura } from '../../models/facturacion.model';
+import { expectFacturaCreationFlow } from '../../testing/fluent-assertions';
 
 describe('FacturacionComponent - HU-32: Listar clientes de facturación', () => {
   let component: FacturacionComponent;
@@ -154,11 +155,21 @@ describe('FacturacionComponent', () => {
 
     // Act
     component.onCrearFactura(facturaDto as any);
-    expect(component.mensajeExito).toContain('Factura creada');
+    expectFacturaCreationFlow({
+      createFacturaSpy: facturacionService.crearFactura as unknown as jasmine.Spy,
+      mensajeExito: component.mensajeExito,
+      errorMessage: component.errorMessage,
+    })
+      .toAttemptCreateWith(facturaDto)
+      .toShowSuccessContaining('Factura creada');
     tick(4000);
 
     // Assert
-    expect(component.mensajeExito).toBe('');
+    expectFacturaCreationFlow({
+      createFacturaSpy: facturacionService.crearFactura as unknown as jasmine.Spy,
+      mensajeExito: component.mensajeExito,
+      errorMessage: component.errorMessage,
+    }).toClearSuccess();
   }));
 
   it('debe manejar error al crear factura', fakeAsync(() => {
@@ -168,11 +179,21 @@ describe('FacturacionComponent', () => {
 
     // Act
     component.onCrearFactura(facturaDto as any);
-    expect(component.errorMessage).toContain('Error al crear la factura');
+    expectFacturaCreationFlow({
+      createFacturaSpy: facturacionService.crearFactura as unknown as jasmine.Spy,
+      mensajeExito: component.mensajeExito,
+      errorMessage: component.errorMessage,
+    })
+      .toAttemptCreateWith(facturaDto)
+      .toShowErrorContaining('Error al crear la factura');
     tick(4000);
 
     // Assert
-    expect(component.errorMessage).toBe('');
+    expectFacturaCreationFlow({
+      createFacturaSpy: facturacionService.crearFactura as unknown as jasmine.Spy,
+      mensajeExito: component.mensajeExito,
+      errorMessage: component.errorMessage,
+    }).toClearError();
   }));
 
   it('no debe crear factura si no hay empresa activa', () => {

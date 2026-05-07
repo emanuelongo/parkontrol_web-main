@@ -5,6 +5,7 @@ import { of, throwError } from 'rxjs';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../services/autenticacion.service';
 import { RolUsuario } from '../../models/shared.model';
+import { expectLoginFlow } from '../../testing/fluent-assertions';
 
 const validEmail = 'ema1001cano@gmail.com';
 const validSecret = 'abcDEF123';
@@ -56,11 +57,16 @@ describe('LoginComponent - caja negra', () => {
 		component.onSubmit();
 
 		// Assert
-		expect(authService.login).toHaveBeenCalledWith({
-			correo: validEmail,
-			contrasena: validSecret,
-		});
-		expect(router.navigate).toHaveBeenCalledWith(['/dashboard']);
+		expectLoginFlow({
+			loginSpy: authService.login as unknown as jasmine.Spy,
+			navigateSpy: router.navigate as unknown as jasmine.Spy,
+			errorMessage: component.errorMessage,
+		})
+			.toAttemptWith({
+				correo: validEmail,
+				contrasena: validSecret,
+			})
+			.toRedirectTo('/dashboard');
 	});
 
 	it('debe redirigir al panel de operador cuando el rol es operador', () => {
@@ -118,8 +124,16 @@ describe('LoginComponent - caja negra', () => {
 		component.onSubmit();
 
 		// Assert
-		expect(authService.login).toHaveBeenCalled();
-		expect(component.errorMessage).toContain('Acceso rechazado');
+		expectLoginFlow({
+			loginSpy: authService.login as unknown as jasmine.Spy,
+			navigateSpy: router.navigate as unknown as jasmine.Spy,
+			errorMessage: component.errorMessage,
+		})
+			.toAttemptWith({
+				correo: invalidEmail,
+				contrasena: validSecret,
+			})
+			.toShowRejectedAccess();
 	});
 
 	it('debe limpiar el mensaje de rechazo luego del timeout', fakeAsync(() => {

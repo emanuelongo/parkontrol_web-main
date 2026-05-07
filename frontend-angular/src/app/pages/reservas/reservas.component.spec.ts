@@ -7,6 +7,7 @@ import { PagosService } from '../../services/pagos.service';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { of, throwError } from 'rxjs';
 import { CrearReservaDto } from '../../models/reserva.model';
+import { expectReservaFinalizacionFlow } from '../../testing/fluent-assertions';
 
 describe('ReservasComponent - Pruebas Front Crear Reserva', () => {
   let component: ReservasComponent;
@@ -268,8 +269,12 @@ describe('ReservasComponent', () => {
     component.finalizarReserva({ id: 41602 } as any);
 
     // Assert
-    expect(dialog.open).toHaveBeenCalled();
-    expect(pagosService.create).toHaveBeenCalled();
+    expectReservaFinalizacionFlow({
+      openDialogSpy: dialog.open as unknown as jasmine.Spy,
+      createPagoSpy: pagosService.create as unknown as jasmine.Spy,
+    })
+      .toOpenDialog()
+      .toProcessPayment();
   });
 
   it('debe abrir modal de crear y crear reserva si el modal retorna datos', () => {

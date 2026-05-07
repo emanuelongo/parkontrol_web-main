@@ -5,6 +5,7 @@ import { ReservasService } from './reservas.service';
 import { Reserva } from './entities/reserva.entity';
 import { VehiculosService } from 'src/vehiculos/vehiculos.service';
 import { CeldasService } from 'src/celdas/celdas.service';
+import { expectFailure, expectReservaResult } from 'src/shared/testing/fluent-assertions';
 
 const createDto = { idVehiculo: 10, idCelda: 20, estado: 'ABIERTA' };
 
@@ -89,7 +90,7 @@ describe('ReservasService', () => {
     currentReserva = { id: 1, fechaSalida: new Date(), celda: { id: 20 } };
 
     // Act + Assert
-    await expect(service.finalizarReserva(1)).rejects.toBeInstanceOf(BadRequestException);
+    await expectFailure(service.finalizarReserva(1)).toBeBadRequest();
     expect(actualizarEstadoMock).not.toHaveBeenCalled();
   });
 
@@ -106,12 +107,7 @@ describe('ReservasService', () => {
     const result = await service.finalizarReserva(1);
 
     // Assert
-    expect(result).toEqual({
-      id: 1,
-      fechaSalida: expect.any(Date),
-      estado: 'CERRADA',
-      celda: { id: 20 },
-    });
+    expectReservaResult(result).toBeFinalizadaConCelda(20);
     expect(actualizarEstadoMock).toHaveBeenCalledWith(20, 'LIBRE');
   });
 

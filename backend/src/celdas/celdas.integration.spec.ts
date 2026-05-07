@@ -7,6 +7,7 @@ import { TipoCelda } from 'src/shared/entities/tipo-celda.entity';
 import { Sensor } from 'src/shared/entities/sensor.entity';
 import { ParqueaderosService } from 'src/parqueaderos/parqueaderos.service';
 import { NotFoundException } from '@nestjs/common';
+import { expectCeldaResult, expectFailure } from 'src/shared/testing/fluent-assertions';
 
 describe('CeldasService - HU09 findByParqueadero', () => {
   let service: CeldasService;
@@ -147,7 +148,7 @@ describe('CeldasService', () => {
     currentTipoCelda = null;
 
     // Act + Assert
-    await expect(service.crear(createDto as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expectFailure(service.crear(createDto as any)).toBeNotFound();
     expect(findParqueaderoByIdMock).toHaveBeenCalledWith(321);
   });
 
@@ -157,7 +158,7 @@ describe('CeldasService', () => {
     currentSensor = null;
 
     // Act + Assert
-    await expect(service.crear(createDto as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expectFailure(service.crear(createDto as any)).toBeNotFound();
     expect(findParqueaderoByIdMock).toHaveBeenCalledWith(321);
   });
 
@@ -172,7 +173,7 @@ describe('CeldasService', () => {
     const result = await service.crear(createDto as any);
 
     // Assert
-    expect(result).toEqual({
+    expectCeldaResult(result).toBeCreatedAs({
       id: 1,
       estado: 'LIBRE',
       parqueadero: currentParqueadero,

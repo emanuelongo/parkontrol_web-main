@@ -1,16 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { TypeOrmModule, getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { VistasService } from './vistas.service';
 import { HistorialReservasView } from './entities/historial-reservas.view';
 import { OcupacionParqueaderoView } from './entities/ocupacion-parqueadero.view';
 import { FacturacionCompletaView } from './entities/facturacion-completa.view';
 import { IngresosPorParqueaderoMensualView } from './entities/ingresos-parqueadero-mensual.view';
-import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { expectOcupacionResult } from 'src/shared/testing/fluent-assertions';
 import * as dotenv from 'dotenv';
 dotenv.config({ path: __dirname + '/../../.env' });
 
-describe('VistasService (Integración Real)', () => {
+const hasRealDbConfig = Boolean(
+  process.env.DB_TYPE &&
+  process.env.DB_HOST &&
+  process.env.DB_PORT &&
+  process.env.DB_USERNAME &&
+  process.env.DB_PASSWORD &&
+  process.env.DB_SID,
+);
+
+(hasRealDbConfig ? describe : describe.skip)('VistasService (Integración Real)', () => {
   let service: VistasService;
   let module: TestingModule;
 
@@ -316,7 +325,11 @@ describe('VistasService', () => {
     const result = await service.getOcupacionByParqueadero(321);
 
     // Assert
-    expect(result).toEqual({ idParqueadero: 321, totalCeldas: 10, celdasOcupadas: 3 });
+    expectOcupacionResult(result).toMatchParqueadero({
+      idParqueadero: 321,
+      totalCeldas: 10,
+      celdasOcupadas: 3,
+    });
     expect(dataSourceMock.query).toHaveBeenCalledTimes(1);
     expect(dataSourceMock.query).toHaveBeenCalledWith(
       'SELECT * FROM VW_OCUPACION_PARQUEADERO WHERE ID_PARQUEADERO = :1',
@@ -332,7 +345,7 @@ describe('VistasService', () => {
     const result = await service.getOcupacionByParqueadero(999);
 
     // Assert
-    expect(result).toBeNull();
+    expectOcupacionResult(result).toBeNull();
   });
 
   it('debe retornar ocupacion por empresa cuando idEmpresa es null', async () => {

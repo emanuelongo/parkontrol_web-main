@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import { ClienteFactura } from './entities/cliente-factura.entity';
 import { FacturaElectronica } from './entities/factura-electronica.entity';
 import { PagosService } from 'src/pagos/pagos.service';
-import { NotFoundException } from '@nestjs/common';
+import { expectFailure, expectFacturaResult } from 'src/shared/testing/fluent-assertions';
 
 describe('FacturacionService - HU32 obtenerClientes', () => {
   let service: FacturacionService;
@@ -131,7 +131,7 @@ describe('FacturacionService', () => {
     currentCliente = null;
 
     // Act + Assert
-    await expect(service.crearFactura(createFacturaDto as any)).rejects.toBeInstanceOf(NotFoundException);
+    await expectFailure(service.crearFactura(createFacturaDto as any)).toBeNotFound();
     expect(findPagoByIdMock).toHaveBeenCalledWith(40903);
   });
 
@@ -145,14 +145,13 @@ describe('FacturacionService', () => {
     const result = await service.crearFactura(createFacturaDto as any);
 
     // Assert
-    expect(result).toEqual({
+    expectFacturaResult(result).toBeCreatedAs({
       id: 1,
       pago: currentPago,
       clienteFactura: currentCliente,
       cufe: 'CUFE-1',
       urlPdf: 'http://pdf',
       enviada: 'N',
-      fechaCreacion: expect.any(Date),
     });
     expect(findPagoByIdMock).toHaveBeenCalledWith(40903);
     expect(savedFactura).toEqual(result);
@@ -186,7 +185,7 @@ describe('FacturacionService', () => {
     currentFacturaById = null;
 
     // Act + Assert
-    await expect(service.marcarComoEnviada(404)).rejects.toBeInstanceOf(NotFoundException);
+    await expectFailure(service.marcarComoEnviada(404)).toBeNotFound();
   });
 
   it('debe consultar factura por pago', async () => {

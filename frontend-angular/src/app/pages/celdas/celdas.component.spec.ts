@@ -6,6 +6,7 @@ import { ParqueaderosService } from '../../services/parqueaderos.service';
 import { AuthService } from '../../services/autenticacion.service';
 import { MatDialog } from '@angular/material/dialog';
 import { Celda } from '../../models/celda.model';
+import { expectCeldaCreationFlow } from '../../testing/fluent-assertions';
 
 
 describe('CeldasComponent - HU-09', () => {
@@ -151,7 +152,11 @@ describe('CeldasComponent', () => {
     component.abrirModalCrear();
 
     // Assert
-    expect(celdasService.create).toHaveBeenCalled();
+    expectCeldaCreationFlow({
+      createSpy: celdasService.create as unknown as jasmine.Spy,
+      refreshSpy: celdasService.getByParqueadero as unknown as jasmine.Spy,
+      errorMessage: component.errorMessage,
+    }).toCreateCelda();
   });
 
   it('debe mostrar error al crear celda con tipo invalido', fakeAsync(() => {
@@ -162,12 +167,21 @@ describe('CeldasComponent', () => {
 
     // Act
     (component as any).crearCelda({});
-    expect(component.errorMessage).toContain('tipo de celda');
+    expectCeldaCreationFlow({
+      createSpy: celdasService.create as unknown as jasmine.Spy,
+      refreshSpy: celdasService.getByParqueadero as unknown as jasmine.Spy,
+      errorMessage: component.errorMessage,
+    }).toShowErrorContaining('tipo de celda');
     tick(5000);
 
     // Assert
-    expect(celdasService.create).toHaveBeenCalled();
-    expect(component.errorMessage).toBe('');
+    expectCeldaCreationFlow({
+      createSpy: celdasService.create as unknown as jasmine.Spy,
+      refreshSpy: celdasService.getByParqueadero as unknown as jasmine.Spy,
+      errorMessage: component.errorMessage,
+    })
+      .toCreateCelda()
+      .toHaveNoError();
   }));
 
   it('debe mostrar error al crear celda con sensor invalido', () => {
@@ -191,8 +205,13 @@ describe('CeldasComponent', () => {
     (component as any).crearCelda({ idParqueadero: 321, tipoCelda: 1 });
 
     // Assert
-    expect(component.errorMessage).toBe('');
-    expect(celdasService.getByParqueadero).toHaveBeenCalledWith(321);
+    expectCeldaCreationFlow({
+      createSpy: celdasService.create as unknown as jasmine.Spy,
+      refreshSpy: celdasService.getByParqueadero as unknown as jasmine.Spy,
+      errorMessage: component.errorMessage,
+    })
+      .toHaveNoError()
+      .toRefreshParqueadero(321);
   });
 
   it('no debe cargar parqueaderos si no hay usuario autenticado', () => {
